@@ -41,7 +41,7 @@ func TestDencodeStreamID(t *testing.T) {
 			t.Fatalf("Failed: error %v", err)
 		}
 		if id != tc.id {
-			t.Fatalf("Failed: expected %v, but %v", id, tc.id)
+			t.Fatalf("Failed: expected %v, but %v", tc.id, id)
 		}
 	}
 }
