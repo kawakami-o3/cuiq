@@ -45,13 +45,12 @@ func DecodeStreamID(r io.Reader) (StreamID, error) {
 		}
 		return StreamID(id), nil
 	} else if flagBits == 0x80 {
-		bs := make([]byte, 2)
+		bs := make([]byte, 3)
 		_, err := r.Read(bs)
 		if err != nil {
 			return 0, err
 		}
 
-		bs = append(bs, make([]byte, 1)...)
 		buf := bytes.NewReader(append(b, bs...))
 		var id int32
 		err = binary.Read(buf, binary.BigEndian, &id)
@@ -59,9 +58,21 @@ func DecodeStreamID(r io.Reader) (StreamID, error) {
 			return 0, err
 		}
 		return StreamID(id), nil
+	} else if flagBits == 0xc0 {
+		bs := make([]byte, 7)
+		_, err := r.Read(bs)
+		if err != nil {
+			return 0, err
+		}
+
+		buf := bytes.NewReader(append(b, bs...))
+		var id int64
+		err = binary.Read(buf, binary.BigEndian, &id)
+		if err != nil {
+			return 0, err
+		}
+		return StreamID(id), nil
 	}
 
-	//fmt.Printf("%08b\n", b[0])
-	//fmt.Printf("%v\n", b[0])
 	return 0, errors.New("invalid stream ID")
 }
