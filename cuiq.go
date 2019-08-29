@@ -10,12 +10,42 @@ import (
 type StreamID int64
 
 func EncodeStreamID(w io.Writer, streamID StreamID) error {
-	err := binary.Write(w, binary.BigEndian, streamID)
-	if err != nil {
-		return err
+	var err error
+	if streamID < 64 {
+		err = binary.Write(w, binary.BigEndian, byte(streamID))
+	} else if streamID < 16384 {
+		buf := bytes.NewBuffer([]byte{})
+		err = binary.Write(buf, binary.BigEndian, int16(streamID))
+		if err != nil {
+			return err
+		}
+
+		bs := buf.Bytes()
+		bs[0] += 0x40
+		_, err = w.Write(buf.Bytes())
+	} else if streamID < 1073741824 {
+		buf := bytes.NewBuffer([]byte{})
+		err = binary.Write(buf, binary.BigEndian, int32(streamID))
+		if err != nil {
+			return err
+		}
+
+		bs := buf.Bytes()
+		bs[0] += 0x80
+		_, err = w.Write(buf.Bytes())
+	} else {
+		buf := bytes.NewBuffer([]byte{})
+		err = binary.Write(buf, binary.BigEndian, streamID)
+		if err != nil {
+			return err
+		}
+
+		bs := buf.Bytes()
+		bs[0] += 0xc0
+		_, err = w.Write(buf.Bytes())
 	}
 
-	return nil
+	return err
 }
 
 func DecodeStreamID(r io.Reader) (StreamID, error) {

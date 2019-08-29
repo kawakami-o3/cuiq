@@ -5,9 +5,6 @@ import (
 	"testing"
 )
 
-func TestEncodeStreamID(t *testing.T) {
-}
-
 type StreamIDData struct {
 	bytes []byte
 	id    StreamID
@@ -32,6 +29,18 @@ var streamIDs = []StreamIDData{
 	},
 }
 
+func TestEncodeStreamID(t *testing.T) {
+	for _, tc := range streamIDs {
+		buf := bytes.NewBuffer([]byte{})
+		err := EncodeStreamID(buf, tc.id)
+		if err != nil {
+			t.Fatalf("Failed: error %v", err)
+		} else if !bytes.Equal(tc.bytes, buf.Bytes()[:len(tc.bytes)]) {
+			t.Fatalf("Failed: [%v] expected %v, but %v", tc.id, tc.bytes, buf.Bytes()[:len(tc.bytes)])
+		}
+	}
+}
+
 func TestDencodeStreamID(t *testing.T) {
 	for _, tc := range streamIDs {
 		b := tc.bytes
@@ -39,8 +48,7 @@ func TestDencodeStreamID(t *testing.T) {
 		id, err := DecodeStreamID(buf)
 		if err != nil {
 			t.Fatalf("Failed: error %v", err)
-		}
-		if id != tc.id {
+		} else if id != tc.id {
 			t.Fatalf("Failed: expected %v, but %v", tc.id, id)
 		}
 	}
