@@ -11,40 +11,33 @@ type StreamID int64
 
 func EncodeStreamID(w io.Writer, streamID StreamID) error {
 	var err error
+
+	buf := bytes.NewBuffer([]byte{})
 	if streamID < 64 {
-		err = binary.Write(w, binary.BigEndian, byte(streamID))
+		err = binary.Write(buf, binary.BigEndian, byte(streamID))
 	} else if streamID < 16384 {
-		buf := bytes.NewBuffer([]byte{})
 		err = binary.Write(buf, binary.BigEndian, int16(streamID))
-		if err != nil {
-			return err
-		}
-
-		bs := buf.Bytes()
-		bs[0] += 0x40
-		_, err = w.Write(buf.Bytes())
 	} else if streamID < 1073741824 {
-		buf := bytes.NewBuffer([]byte{})
 		err = binary.Write(buf, binary.BigEndian, int32(streamID))
-		if err != nil {
-			return err
-		}
-
-		bs := buf.Bytes()
-		bs[0] += 0x80
-		_, err = w.Write(buf.Bytes())
 	} else {
-		buf := bytes.NewBuffer([]byte{})
 		err = binary.Write(buf, binary.BigEndian, streamID)
-		if err != nil {
-			return err
-		}
-
-		bs := buf.Bytes()
-		bs[0] += 0xc0
-		_, err = w.Write(buf.Bytes())
 	}
 
+	bs := buf.Bytes()
+	if streamID < 64 {
+		// bs[0] += 0x00
+	} else if streamID < 16384 {
+		bs[0] += 0x40
+	} else if streamID < 1073741824 {
+		bs[0] += 0x80
+	} else {
+		bs[0] += 0xc0
+	}
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(buf.Bytes())
 	return err
 }
 
